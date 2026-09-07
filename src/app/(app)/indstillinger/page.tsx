@@ -1,4 +1,7 @@
+import { headers } from 'next/headers';
+
 import { requireSession } from '@/lib/auth';
+import { appUrl } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/page-header';
 import { SettingsForm } from '@/components/settings/settings-form';
@@ -16,7 +19,16 @@ export default async function SettingsPage() {
     supabase.from('profiles').select('id, full_name, email, role').order('created_at'),
   ]);
 
-  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://dit-domæne.dk'}/api/telnyx/webhook`;
+  // Vis den adresse Telnyx rent faktisk får at vide - altså den samme
+  // env.appUrl() bruger når der ringes ud. Ellers kan siden vise noget andet
+  // end det systemet gør, og fejlen bliver først synlig når opkald forsvinder.
+  const configuredUrl = appUrl();
+  const webhookUrl = `${configuredUrl}/api/telnyx/webhook`;
+
+  // Adressen browseren står på lige nu. Passer den ikke med den konfigurerede,
+  // er NEXT_PUBLIC_APP_URL sat forkert, og webhooks ville lande et andet sted.
+  const host = (await headers()).get('host');
+  const looksWrong = Boolean(host) && !configuredUrl.includes(host!);
 
   return (
     <>
@@ -33,10 +45,19 @@ export default async function SettingsPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader title="Telnyx-webhook" description="Indsæt denne adresse i din Call Control-applikation." />
-            <div className="p-4">
+            <div className="space-y-2 p-4">
               <code className="block break-all rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-800">
                 {webhookUrl}
               </code>
+              {looksWrong ? (
+                <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  Adressen peger ikke på den app du sidder i ({host}). Det betyder at{' '}
+                  <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code> er sat
+                  forkert - og at Telnyx ville sende opkaldshændelser det forkerte sted hen.
+                  Ret variablen, eller fjern den helt, så bruges deployment-adressen
+                  automatisk.
+                </p>
+              ) : null}
             </div>
           </Card>
 
