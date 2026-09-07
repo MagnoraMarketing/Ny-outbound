@@ -8,6 +8,8 @@ import { isSupabaseConfigured } from '@/lib/setup';
 
 export interface AuthFormState {
   error?: string;
+  /** Sat når fejlen skyldes manglende opsætning, så UI'et kan linke derhen. */
+  setupNeeded?: boolean;
 }
 
 export async function login(
@@ -19,7 +21,7 @@ export async function login(
   const next = String(formData.get('next') ?? '/dashboard');
 
   if (!isSupabaseConfigured()) {
-    return { error: 'Appen mangler forbindelse til databasen. Se /opsaetning.' };
+    return { error: 'Appen mangler forbindelse til databasen.', setupNeeded: true };
   }
 
   if (!email || !password) {
@@ -47,7 +49,7 @@ export async function signup(
   const orgName = String(formData.get('org_name') ?? '').trim();
 
   if (!isSupabaseConfigured()) {
-    return { error: 'Appen mangler forbindelse til databasen. Se /opsaetning.' };
+    return { error: 'Appen mangler forbindelse til databasen.', setupNeeded: true };
   }
 
   if (!email || !password || !orgName) {

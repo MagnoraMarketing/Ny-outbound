@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import { login, type AuthFormState } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
+import { AuthError } from '@/components/ui/auth-error';
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -35,9 +36,7 @@ function LoginForm() {
       </div>
 
       {state.error ? (
-        <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {state.error}
-        </p>
+        <AuthError error={state.error} setupNeeded={state.setupNeeded} />
       ) : null}
 
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
