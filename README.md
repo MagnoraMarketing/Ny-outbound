@@ -23,10 +23,17 @@ npm run dev
 
 ### 1. Supabase
 
-Opret et projekt og kør migrationerne i `supabase/migrations` i rækkefølge
-(SQL-editoren i dashboardet, eller `supabase db push` med CLI'en). De opretter
-skemaet, politikkerne og de triggere der giver en ny bruger en organisation,
-en profil og et sæt standarddispositioner.
+Opret et projekt og læg skemaet på. Nemmest er at indsætte hele
+`supabase/schema.sql` i SQL-editoren i dashboardet og køre den én gang - den
+er alle migrationerne samlet i rigtig rækkefølge. Bruger du CLI'en, så kør
+`supabase db push` mod `supabase/migrations` i stedet.
+
+Skemaet opretter tabellerne, RLS-politikkerne og de triggere der giver en ny
+bruger en organisation, en profil og et sæt standarddispositioner.
+
+`supabase/schema.sql` er genereret. Retter du i migrationerne, så kør
+`npm run schema:bundle` bagefter; `npm run schema:check` fejler hvis filen er
+kommet bagud.
 
 Hent `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` og
 `SUPABASE_SERVICE_ROLE_KEY` under **Project Settings → API**.
@@ -58,6 +65,8 @@ udskriften er klar, og kan startes manuelt igen fra siden med opkaldet.
 | `npm run test` | Kører testene |
 | `npm run typecheck` | Typetjek uden at bygge |
 | `npm run lint` | ESLint |
+| `npm run schema:bundle` | Samler migrationerne til `supabase/schema.sql` |
+| `npm run schema:check` | Fejler hvis den samlede fil er kommet bagud |
 
 ## Sådan hænger det sammen
 

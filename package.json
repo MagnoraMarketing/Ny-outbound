@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "schema:bundle": "node scripts/bundle-schema.mjs",
+    "schema:check": "node scripts/bundle-schema.mjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
