@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: oklch(0.97 0.014 254);
+  --color-brand-100: oklch(0.93 0.032 254);
+  --color-brand-200: oklch(0.87 0.06 254);
+  --color-brand-300: oklch(0.79 0.1 254);
+  --color-brand-400: oklch(0.7 0.14 254);
+  --color-brand-500: oklch(0.62 0.17 254);
+  --color-brand-600: oklch(0.54 0.18 254);
+  --color-brand-700: oklch(0.46 0.16 254);
+  --color-brand-800: oklch(0.39 0.13 254);
+  --color-brand-900: oklch(0.33 0.1 254);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.21 0.02 258);
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabulære tal, så tal i kolonner og opkaldstimere ikke hopper. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
