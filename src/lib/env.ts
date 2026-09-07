@@ -14,6 +14,7 @@ function required(name: string): string {
 }
 
 function optional(name: string): string | undefined {
+  // Trimmes, så en værdi der kun er mellemrum tæller som ikke sat.
   return process.env[name]?.trim() || undefined;
 }
 
@@ -30,8 +31,31 @@ export const env = {
 
   anthropicApiKey: () => required('ANTHROPIC_API_KEY'),
 
-  appUrl: () => process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  appUrl: () => appUrl(),
 } as const;
+
+/**
+ * Appens egen offentlige adresse. Bruges blandt andet til at fortælle Telnyx
+ * hvor opkaldshændelser skal sendes hen, så en forkert værdi betyder at
+ * telefonien stille holder op med at virke.
+ *
+ * Vercel udstiller selv adressen, så den behøver ikke sættes i hånden -
+ * NEXT_PUBLIC_APP_URL er kun til egne domæner og lokal kørsel.
+ */
+export function appUrl(): string {
+  const configured = optional('NEXT_PUBLIC_APP_URL');
+  if (configured) return configured.replace(/\/+$/, '');
+
+  // Sættes automatisk af Vercel til projektets produktionsdomæne.
+  const production = optional('VERCEL_PROJECT_PRODUCTION_URL');
+  if (production) return `https://${production}`;
+
+  // Den aktuelle deployments egen adresse, fx på preview.
+  const deployment = optional('VERCEL_URL');
+  if (deployment) return `https://${deployment}`;
+
+  return 'http://localhost:3000';
+}
 
 /** Bruges til at vise en pæn "ikke konfigureret endnu"-tilstand i UI'et. */
 export function isConfigured(...names: string[]): boolean {
