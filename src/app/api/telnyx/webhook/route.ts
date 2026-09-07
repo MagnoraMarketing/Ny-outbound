@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bridge, hangup, startRecording, startTranscription } from '@/lib/telnyx/client';
 import { decodeClientState } from '@/lib/telnyx/client-state';
 import { parseWebhook, statusFromHangupCause, type TelnyxWebhookEvent } from '@/lib/telnyx/events';
 import { verifyTelnyxSignature } from '@/lib/telnyx/signature';
+import { runAnalysisForCall } from '@/lib/ai/run';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,6 +120,7 @@ async function handleEvent(supabase: Admin, event: TelnyxWebhookEvent) {
 
     case 'call.hangup':
       await onHangup(supabase, callId, payload.hangup_cause);
+      scheduleAnalysis(callId);
       break;
 
     case 'call.recording.saved':
@@ -129,10 +131,33 @@ async function handleEvent(supabase: Admin, event: TelnyxWebhookEvent) {
       await onTranscription(supabase, callId, event);
       break;
 
+    case 'call.transcription.saved':
+      // Udskriften er komplet, så nu kan opkaldet vurderes. Analysen kører
+      // efter svaret er sendt, så Telnyx ikke venter på modellen.
+      scheduleAnalysis(callId);
+      break;
+
     default:
       // Alle øvrige hændelser ligger gemt i call_events hvis de får brug for os.
       break;
   }
+}
+
+/**
+ * Sætter AI-analysen i gang efter at webhook-svaret er sendt.
+ *
+ * after() lader Next køre arbejdet færdigt uden at Telnyx venter - en
+ * langsom modelkald ville ellers give timeout og udløse gentagne leveringer.
+ * runAnalysisForCall springer selv over, hvis udskriften mangler eller
+ * opkaldet allerede er analyseret.
+ */
+function scheduleAnalysis(callId: string) {
+  after(async () => {
+    const result = await runAnalysisForCall(callId);
+    if (result.status === 'error') {
+      console.error('[ai] analysen fejlede for opkald', callId, result.message);
+    }
+  });
 }
 
 async function onAnswered(

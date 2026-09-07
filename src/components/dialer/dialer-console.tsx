@@ -18,9 +18,17 @@ interface Props {
   dispositions: Disposition[];
   callerId: string | null;
   activeSessionId: string | null;
+  /** Sat når sælgeren kom hertil fra et bestemt lead eller en opgave. */
+  requestedLead: QueueLead | null;
 }
 
-export function DialerConsole({ lists, dispositions, callerId, activeSessionId }: Props) {
+export function DialerConsole({
+  lists,
+  dispositions,
+  callerId,
+  activeSessionId,
+  requestedLead,
+}: Props) {
   const phone = useTelnyxPhone();
   const [pending, startTransition] = useTransition();
 
@@ -64,8 +72,16 @@ export function DialerConsole({ lists, dispositions, callerId, activeSessionId }
       setMessage(result.error);
       return;
     }
-    setQueue(result.leads);
-    if (!result.leads.length) setMessage('Der er ingen leads klar til opkald lige nu.');
+    // Er man kommet hertil fra et bestemt lead, skal det ligge forrest.
+    // Sælgeren må gerne springe koens prioritering over - men ikke de to
+    // regler der ikke er til forhandling: intet nummer, eller do-not-call.
+    const canDial = requestedLead && !requestedLead.do_not_call && requestedLead.phone;
+    const leads = canDial
+      ? [requestedLead, ...result.leads.filter((lead) => lead.id !== requestedLead.id)]
+      : result.leads;
+
+    setQueue(leads);
+    if (!leads.length) setMessage('Der er ingen leads klar til opkald lige nu.');
   }
 
   function handleStart() {
@@ -227,6 +243,21 @@ export function DialerConsole({ lists, dispositions, callerId, activeSessionId }
                 stille opkald hos modtageren.
               </p>
             </div>
+          ) : null}
+
+          {requestedLead ? (
+            requestedLead.do_not_call || !requestedLead.phone ? (
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {requestedLead.company_name} kan ikke ringes op
+                {requestedLead.do_not_call
+                  ? ' og er markeret som "må ikke kontaktes".'
+                  : ', fordi der ikke er noget telefonnummer.'}
+              </p>
+            ) : (
+              <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-900">
+                {requestedLead.company_name} ligger først i køen når du starter.
+              </p>
+            )
           ) : null}
 
           {outsideHours ? (
