@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Papa from 'papaparse';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useTransition } from 'react';
-import { AlertTriangle, CheckCircle2, FileUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileUp, Info } from 'lucide-react';
 
 import { importLeads } from '../actions';
 import { PageHeader } from '@/components/layout/page-header';
@@ -93,24 +93,53 @@ export default function ImportPage() {
       />
 
       {result ? (
-        <Card className="mb-6 border-emerald-200 bg-emerald-50 p-4">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" aria-hidden />
-            <div>
-              <p className="text-sm font-medium text-emerald-900">
-                {result.imported} leads importeret
-              </p>
-              {result.skipped > 0 ? (
-                <p className="mt-0.5 text-sm text-emerald-800">
-                  {result.skipped} blev sprunget over, fordi nummeret allerede fandtes.
+        // Blev intet importeret fordi alt fandtes i forvejen, er der ikke sket
+        // noget galt - men et grønt flueben ved "0 leads" læses som en fejl.
+        // Derfor to forskellige beskeder.
+        result.imported === 0 && result.skipped > 0 ? (
+          <Card className="mb-6 border-sky-200 bg-sky-50 p-4">
+            <div className="flex items-start gap-3">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" aria-hidden />
+              <div>
+                <p className="text-sm font-medium text-sky-900">
+                  Alle {result.skipped} leads i filen findes allerede
                 </p>
-              ) : null}
-              <Link href="/leads" className="mt-2 inline-block text-sm font-medium text-emerald-900 underline">
-                Se leads
-              </Link>
+                <p className="mt-0.5 text-sm text-sky-800">
+                  Der er derfor ikke oprettet nogen ny liste, og intet er ændret. Er filen
+                  importeret før, ligger leadsene allerede under Leads.
+                </p>
+                <Link
+                  href="/leads"
+                  className="mt-2 inline-block text-sm font-medium text-sky-900 underline"
+                >
+                  Se dine leads
+                </Link>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        ) : (
+          <Card className="mb-6 border-emerald-200 bg-emerald-50 p-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+              <div>
+                <p className="text-sm font-medium text-emerald-900">
+                  {result.imported} leads importeret
+                </p>
+                {result.skipped > 0 ? (
+                  <p className="mt-0.5 text-sm text-emerald-800">
+                    {result.skipped} blev sprunget over, fordi nummeret allerede fandtes.
+                  </p>
+                ) : null}
+                <Link
+                  href="/leads"
+                  className="mt-2 inline-block text-sm font-medium text-emerald-900 underline"
+                >
+                  Se leads
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )
       ) : null}
 
       <Card className="mb-6">

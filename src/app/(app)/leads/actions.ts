@@ -31,23 +31,6 @@ export async function importLeads(
     return { error: 'Der er ingen gyldige leads at importere.' };
   }
 
-  const name = listName.trim() || `Import ${new Date().toLocaleDateString('da-DK')}`;
-
-  const { data: list, error: listError } = await supabase
-    .from('lead_lists')
-    .insert({
-      org_id: profile.org_id,
-      name,
-      source: 'csv',
-      created_by: profile.id,
-    })
-    .select('id')
-    .single();
-
-  if (listError || !list) {
-    return { error: `Kunne ikke oprette listen: ${listError?.message ?? 'ukendt fejl'}` };
-  }
-
   // Frasortér numre organisationen allerede har. Det unikke indeks ville
   // afvise dem alligevel, men her får brugeren et tal i stedet for en fejl.
   const phones = leads.map((lead) => lead.phone).filter((p): p is string => Boolean(p));
@@ -64,12 +47,28 @@ export async function importLeads(
 
   const fresh = leads.filter((lead) => lead.phone && !existing.has(lead.phone));
 
+  // Er alt kendt i forvejen, oprettes der ingen liste. Ellers ville et
+  // gentaget importforsøg - fx et dobbeltklik - efterlade en tom liste
+  // hver gang, uden et eneste lead i sig.
   if (!fresh.length) {
-    return {
-      imported: 0,
-      skippedExisting: leads.length,
-      listId: list.id,
-    };
+    return { imported: 0, skippedExisting: leads.length };
+  }
+
+  const name = listName.trim() || `Import ${new Date().toLocaleDateString('da-DK')}`;
+
+  const { data: list, error: listError } = await supabase
+    .from('lead_lists')
+    .insert({
+      org_id: profile.org_id,
+      name,
+      source: 'csv',
+      created_by: profile.id,
+    })
+    .select('id')
+    .single();
+
+  if (listError || !list) {
+    return { error: `Kunne ikke oprette listen: ${listError?.message ?? 'ukendt fejl'}` };
   }
 
   const rows = fresh.map((lead) => ({
