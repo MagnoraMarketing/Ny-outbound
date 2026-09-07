@@ -1,17 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+import { isValidHttpUrl, readEnv } from '@/lib/setup';
+
 const PUBLIC_ROUTES = ['/login', '/signup', '/auth'];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = readEnv('NEXT_PUBLIC_SUPABASE_URL');
+  const supabaseKey = readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
-  // Uden Supabase-konfiguration kan vi ikke afgøre noget om sessionen.
+  // Uden brugbar Supabase-konfiguration kan vi ikke afgøre noget om sessionen.
   // Lad requesten passere, så opsætningssiden kan nå at forklare hvorfor.
-  if (!supabaseUrl || !supabaseKey) {
+  //
+  // URL'en valideres her og ikke kun for tilstedeværelse: createServerClient
+  // kaster på en ugyldig adresse, og en fejl i proxyen rammer hver eneste
+  // rute med en bar 500 - også opsætningssiden der skulle forklare fejlen.
+  if (!isValidHttpUrl(supabaseUrl) || !supabaseKey) {
     return response;
   }
 

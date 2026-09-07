@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default function SetupPage() {
   const groups = setupStatus();
   const supabaseReady = isSupabaseConfigured();
-  const blocking = groups.filter((g) => g.required && g.missing.length > 0);
+  const blocking = groups.filter((g) => g.required && g.problems.length > 0);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">
@@ -28,7 +28,7 @@ export default function SetupPage() {
 
       <ul className="mt-6 space-y-3">
         {groups.map((group) => {
-          const ok = group.missing.length === 0;
+          const ok = group.problems.length === 0;
           return (
             <li
               key={group.name}
@@ -57,12 +57,18 @@ export default function SetupPage() {
                   </p>
                   <p className="mt-0.5 text-sm text-slate-600">{group.description}</p>
                   {!ok ? (
-                    <ul className="mt-2 space-y-1">
-                      {group.missing.map((name) => (
-                        <li key={name}>
+                    <ul className="mt-2 space-y-1.5">
+                      {group.problems.map((problem) => (
+                        <li key={problem.name}>
                           <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
-                            {name}
+                            {problem.name}
                           </code>
+                          <span className="ml-2 text-xs text-slate-500">
+                            {problem.issue === 'missing' ? 'mangler' : 'ugyldig værdi'}
+                          </span>
+                          {problem.hint ? (
+                            <p className="mt-0.5 text-xs text-slate-600">{problem.hint}</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

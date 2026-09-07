@@ -4,7 +4,7 @@
  */
 
 function required(name: string): string {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(
       `Miljøvariablen ${name} mangler. Se .env.example for hvilke værdier der skal sættes.`,
@@ -14,7 +14,7 @@ function required(name: string): string {
 }
 
 function optional(name: string): string | undefined {
-  return process.env[name] || undefined;
+  return process.env[name]?.trim() || undefined;
 }
 
 export const env = {
@@ -35,5 +35,5 @@ export const env = {
 
 /** Bruges til at vise en pæn "ikke konfigureret endnu"-tilstand i UI'et. */
 export function isConfigured(...names: string[]): boolean {
-  return names.every((name) => Boolean(process.env[name]));
+  return names.every((name) => Boolean(process.env[name]?.trim()));
 }
