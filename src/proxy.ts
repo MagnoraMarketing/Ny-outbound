@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 
 const PUBLIC_ROUTES = ['/login', '/signup', '/auth'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -63,7 +63,7 @@ export const config = {
   matcher: [
     /*
      * Alle sider undtagen statiske filer, billeder og Telnyx-webhooken,
-     * som autentificeres med signatur i stedet for cookies.
+     * som autentificeres med Ed25519-signatur i stedet for cookies.
      */
     '/((?!_next/static|_next/image|favicon.ico|api/telnyx/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],

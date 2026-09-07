@@ -143,6 +143,8 @@ export type DialerSession = {
   mode: DialerMode;
   lines: number;
   status: DialerSessionStatus;
+  /** Telnyx-benet agenten sidder på, sat når parallel-sessionen kobles op. */
+  agent_call_control_id: string | null;
   calls_made: number;
   calls_connected: number;
   meetings_booked: number;
@@ -160,6 +162,8 @@ export type Call = {
   disposition_id: string | null;
   direction: CallDirection;
   status: CallStatus;
+  /** Sandt for agentens eget ben i en parallel-session. */
+  is_agent_leg: boolean;
   telnyx_call_control_id: string | null;
   telnyx_call_session_id: string | null;
   telnyx_call_leg_id: string | null;
@@ -365,8 +369,9 @@ export type Database = {
         DialerSession,
         Insertable<
           DialerSession,
-          | 'list_id' | 'mode' | 'lines' | 'status' | 'calls_made' | 'calls_connected'
-          | 'meetings_booked' | 'talk_seconds' | 'started_at' | 'ended_at'
+          | 'list_id' | 'mode' | 'lines' | 'status' | 'agent_call_control_id'
+          | 'calls_made' | 'calls_connected' | 'meetings_booked' | 'talk_seconds'
+          | 'started_at' | 'ended_at'
         >,
         Partial<DialerSession>,
         [
@@ -380,7 +385,7 @@ export type Database = {
         Insertable<
           Call,
           | 'lead_id' | 'user_id' | 'session_id' | 'disposition_id' | 'direction' | 'status'
-          | 'telnyx_call_control_id' | 'telnyx_call_session_id' | 'telnyx_call_leg_id'
+          | 'is_agent_leg' | 'telnyx_call_control_id' | 'telnyx_call_session_id' | 'telnyx_call_leg_id'
           | 'from_number' | 'to_number' | 'started_at' | 'answered_at' | 'ended_at'
           | 'duration_seconds' | 'talk_seconds' | 'hangup_cause' | 'disposition_note'
           | 'updated_at'
