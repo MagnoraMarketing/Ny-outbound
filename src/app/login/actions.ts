@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
+import { isSupabaseConfigured } from '@/lib/setup';
 
 export interface AuthFormState {
   error?: string;
@@ -16,6 +17,10 @@ export async function login(
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const next = String(formData.get('next') ?? '/dashboard');
+
+  if (!isSupabaseConfigured()) {
+    return { error: 'Appen mangler forbindelse til databasen. Se /opsaetning.' };
+  }
 
   if (!email || !password) {
     return { error: 'Udfyld både e-mail og adgangskode.' };
@@ -40,6 +45,10 @@ export async function signup(
   const password = String(formData.get('password') ?? '');
   const fullName = String(formData.get('full_name') ?? '').trim();
   const orgName = String(formData.get('org_name') ?? '').trim();
+
+  if (!isSupabaseConfigured()) {
+    return { error: 'Appen mangler forbindelse til databasen. Se /opsaetning.' };
+  }
 
   if (!email || !password || !orgName) {
     return { error: 'Udfyld e-mail, adgangskode og firmanavn.' };

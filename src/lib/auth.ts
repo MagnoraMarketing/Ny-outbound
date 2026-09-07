@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/server';
+import { isSupabaseConfigured } from '@/lib/setup';
 import type { Organization, Profile } from '@/lib/supabase/database.types';
 
 export interface SessionContext {
@@ -14,6 +15,12 @@ export interface SessionContext {
  * Sender til login hvis der ikke er nogen session.
  */
 export async function requireSession(): Promise<SessionContext> {
+  // Tjekkes før klienten bygges: uden variablerne ville createClient() kaste
+  // midt i renderingen og efterlade brugeren med en tom 500-side.
+  if (!isSupabaseConfigured()) {
+    redirect('/opsaetning');
+  }
+
   const supabase = await createClient();
 
   const {
