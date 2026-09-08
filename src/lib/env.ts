@@ -26,8 +26,6 @@ export const env = {
   telnyxApiKey: () => required('TELNYX_API_KEY'),
   telnyxConnectionId: () => required('TELNYX_CONNECTION_ID'),
   telnyxPublicKey: () => required('TELNYX_PUBLIC_KEY'),
-  telnyxSipUsername: () => optional('TELNYX_SIP_USERNAME'),
-  telnyxSipPassword: () => optional('TELNYX_SIP_PASSWORD'),
 
   anthropicApiKey: () => required('ANTHROPIC_API_KEY'),
 

@@ -114,7 +114,7 @@ efter det første forsøg i stedet for at tælle opkaldet med to gange.
 npm run test
 ```
 
-69 tests dækker den logik der kan gå galt uden at nogen opdager det:
+88 tests dækker den logik der kan gå galt uden at nogen opdager det:
 nummernormalisering til E.164, gætning af kolonnenavne i CSV-import,
 importvalidering, Ed25519-signaturverifikation (inklusive manipuleret body og
 replay af gamle webhooks), køprioritering og validering af AI-svaret.
