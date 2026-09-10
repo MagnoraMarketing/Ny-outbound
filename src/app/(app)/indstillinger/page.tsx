@@ -25,8 +25,9 @@ export default async function SettingsPage() {
   const configuredUrl = appUrl();
   const webhookUrl = `${configuredUrl}/api/telnyx/webhook`;
 
-  // Adressen browseren står på lige nu. Passer den ikke med den konfigurerede,
-  // er NEXT_PUBLIC_APP_URL sat forkert, og webhooks ville lande et andet sted.
+  // Adressen browseren står på lige nu. Passer den ikke med den appen sender
+  // til Telnyx, ville opkaldshændelser lande et andet sted. På Vercel kommer
+  // adressen fra platformen selv, så det bør ikke kunne ske der.
   const host = (await headers()).get('host');
   const looksWrong = Boolean(host) && !configuredUrl.includes(host!);
 
@@ -51,11 +52,11 @@ export default async function SettingsPage() {
               </code>
               {looksWrong ? (
                 <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                  Adressen peger ikke på den app du sidder i ({host}). Det betyder at{' '}
-                  <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code> er sat
-                  forkert - og at Telnyx ville sende opkaldshændelser det forkerte sted hen.
-                  Ret variablen, eller fjern den helt, så bruges deployment-adressen
-                  automatisk.
+                  Adressen peger ikke på den app du sidder i ({host}), så Telnyx ville sende
+                  opkaldshændelser det forkerte sted hen. På Vercel kommer adressen fra
+                  platformen selv; kører appen et andet sted, er det{' '}
+                  <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code> der
+                  skal rettes.
                 </p>
               ) : null}
             </div>

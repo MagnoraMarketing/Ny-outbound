@@ -24,9 +24,19 @@ npm run dev
 ### 1. Supabase
 
 Opret et projekt og læg skemaet på. Nemmest er at indsætte hele
-`supabase/schema.sql` i SQL-editoren i dashboardet og køre den én gang - den
-er alle migrationerne samlet i rigtig rækkefølge. Bruger du CLI'en, så kør
+`supabase/schema.sql` i SQL-editoren i dashboardet og køre den - den er alle
+migrationerne samlet i rigtig rækkefølge. Bruger du CLI'en, så kør
 `supabase db push` mod `supabase/migrations` i stedet.
+
+Filen kan køres igen uden at fejle. Det er med vilje: er en kørsel gået i
+stå undervejs, eller er man i tvivl om hvor langt man nåede, er svaret at
+køre den forfra. En allerede oprettet tabel, type eller politik springes
+over eller lægges på igen, og resultatet er det samme.
+
+Har du oprettet en bruger *før* skemaet blev lagt på, får den sin
+organisation og profil af skemaet - triggeren fyrer kun ved nye
+oprettelser, så uden det ville man blive sendt til opsætningssiden ved
+hvert login uden at få at vide hvorfor.
 
 Skemaet opretter tabellerne, RLS-politikkerne og de triggere der giver en ny
 bruger en organisation, en profil og et sæt standarddispositioner.
@@ -42,11 +52,16 @@ Hent `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` og
 
 1. Opret en **Call Control-applikation** (Voice → Call Control).
 2. Sæt dens webhook-adresse til `https://<dit-domæne>/api/telnyx/webhook`.
-   Adressen vises også under Indstillinger i appen.
-3. Kopiér applikationens connection ID til `TELNYX_CONNECTION_ID`.
-4. Hent API-nøglen og **public key** (Auth → API Keys / Public Key) til
+   Adressen vises også under Indstillinger i appen - brug den, den er den
+   samme som serveren sender med hvert opkald.
+3. Sæt **Webhook API Version** til **API v2**. Med v1 mangler `data`-laget i
+   hændelserne, og appen kasserer dem alle uden en fejl.
+4. Kopiér applikationens connection ID til `TELNYX_CONNECTION_ID`.
+5. Hent API-nøglen og **public key** (Auth → API Keys / Public Key) til
    `TELNYX_API_KEY` og `TELNYX_PUBLIC_KEY`.
-5. Køb et dansk nummer og sæt det som afsendernummer under Indstillinger.
+6. Tilknyt en **outbound voice profile** til applikationen. Uden den afviser
+   Telnyx udgående opkald.
+7. Køb et dansk nummer og sæt det som afsendernummer under Indstillinger.
 
 Webhooken kræver `TELNYX_PUBLIC_KEY`: hver leverance verificeres med Ed25519,
 og en request uden gyldig signatur afvises med 401.
