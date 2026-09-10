@@ -3,7 +3,14 @@ import { createServerClient } from '@supabase/ssr';
 
 import { isValidHttpUrl, readEnv } from '@/lib/setup';
 
-const PUBLIC_ROUTES = ['/login', '/signup', '/auth'];
+/**
+ * `/opsaetning` er med her med vilje. Siden forklarer hvorfor man ikke kan
+ * komme ind, så den skal kunne nås netop når man ikke er logget ind - ellers
+ * sender proxyen brugeren til login, som linker tilbage til opsætningssiden,
+ * som sender til login. Siden viser kun navnene på de variabler der mangler
+ * og projektets offentlige reference, aldrig en nøgle.
+ */
+const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/opsaetning'];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
