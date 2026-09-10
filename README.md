@@ -52,11 +52,16 @@ Hent `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` og
 
 1. Opret en **Call Control-applikation** (Voice → Call Control).
 2. Sæt dens webhook-adresse til `https://<dit-domæne>/api/telnyx/webhook`.
-   Adressen vises også under Indstillinger i appen.
-3. Kopiér applikationens connection ID til `TELNYX_CONNECTION_ID`.
-4. Hent API-nøglen og **public key** (Auth → API Keys / Public Key) til
+   Adressen vises også under Indstillinger i appen - brug den, den er den
+   samme som serveren sender med hvert opkald.
+3. Sæt **Webhook API Version** til **API v2**. Med v1 mangler `data`-laget i
+   hændelserne, og appen kasserer dem alle uden en fejl.
+4. Kopiér applikationens connection ID til `TELNYX_CONNECTION_ID`.
+5. Hent API-nøglen og **public key** (Auth → API Keys / Public Key) til
    `TELNYX_API_KEY` og `TELNYX_PUBLIC_KEY`.
-5. Køb et dansk nummer og sæt det som afsendernummer under Indstillinger.
+6. Tilknyt en **outbound voice profile** til applikationen. Uden den afviser
+   Telnyx udgående opkald.
+7. Køb et dansk nummer og sæt det som afsendernummer under Indstillinger.
 
 Webhooken kræver `TELNYX_PUBLIC_KEY`: hver leverance verificeres med Ed25519,
 og en request uden gyldig signatur afvises med 401.

@@ -38,9 +38,23 @@ describe('appUrl', () => {
     expect(appUrl()).toBe('https://ny-outbound-abc123.vercel.app');
   });
 
-  it('foretrækker den konfigurerede adresse frem for Vercels', () => {
+  it('lader Vercels eget domæne vinde over en håndsat adresse', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://mit-domaene.dk';
     process.env.VERCEL_PROJECT_PRODUCTION_URL = 'ny-outbound.vercel.app';
+    expect(appUrl()).toBe('https://ny-outbound.vercel.app');
+  });
+
+  it('lader ikke en Supabase-adresse i variablen kapre webhooken', () => {
+    // Den præcise fejl der lammede telefonien: Supabase-projektets adresse
+    // endt i feltet til appens egen. Hvert opkald sender sin webhook_url med,
+    // så alle opkaldshændelser ville være gået til Supabase.
+    process.env.NEXT_PUBLIC_APP_URL = 'https://ppllbptgiodtcacavlnw.supabase.co';
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'ny-outbound.vercel.app';
+    expect(appUrl()).toBe('https://ny-outbound.vercel.app');
+  });
+
+  it('bruger den håndsatte adresse uden for Vercel, hvor platformen tier', () => {
+    process.env.NEXT_PUBLIC_APP_URL = 'https://mit-domaene.dk';
     expect(appUrl()).toBe('https://mit-domaene.dk');
   });
 
