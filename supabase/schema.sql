@@ -18,65 +18,92 @@ create extension if not exists "pgcrypto";
 -- Enums
 -- ---------------------------------------------------------------------------
 
-create type public.user_role as enum ('owner', 'admin', 'agent');
+do $$ begin
+  create type public.user_role as enum ('owner', 'admin', 'agent');
+exception when duplicate_object then null;
+end $$;
 
-create type public.lead_status as enum (
-  'new',            -- Ny
-  'attempting',     -- Forsøgt kontaktet
-  'contacted',      -- Kontaktet
-  'qualified',      -- Kvalificeret
-  'meeting_booked', -- Møde booket
-  'won',            -- Vundet
-  'lost',           -- Tabt
-  'dnc'             -- Må ikke kontaktes
-);
+do $$ begin
+  create type public.lead_status as enum (
+    'new',            -- Ny
+    'attempting',     -- Forsøgt kontaktet
+    'contacted',      -- Kontaktet
+    'qualified',      -- Kvalificeret
+    'meeting_booked', -- Møde booket
+    'won',            -- Vundet
+    'lost',           -- Tabt
+    'dnc'             -- Må ikke kontaktes
+  );
+exception when duplicate_object then null;
+end $$;
 
-create type public.call_direction as enum ('outbound', 'inbound');
+do $$ begin
+  create type public.call_direction as enum ('outbound', 'inbound');
+exception when duplicate_object then null;
+end $$;
 
-create type public.call_status as enum (
-  'queued',
-  'initiated',
-  'ringing',
-  'answered',
-  'completed',
-  'busy',
-  'no_answer',
-  'failed',
-  'canceled',
-  'voicemail'
-);
+do $$ begin
+  create type public.call_status as enum (
+    'queued',
+    'initiated',
+    'ringing',
+    'answered',
+    'completed',
+    'busy',
+    'no_answer',
+    'failed',
+    'canceled',
+    'voicemail'
+  );
+exception when duplicate_object then null;
+end $$;
 
-create type public.disposition_category as enum (
-  'connected',
-  'no_answer',
-  'not_interested',
-  'meeting',
-  'callback',
-  'dnc',
-  'wrong_number'
-);
+do $$ begin
+  create type public.disposition_category as enum (
+    'connected',
+    'no_answer',
+    'not_interested',
+    'meeting',
+    'callback',
+    'dnc',
+    'wrong_number'
+  );
+exception when duplicate_object then null;
+end $$;
 
-create type public.dialer_mode as enum ('manual', 'power', 'parallel');
+do $$ begin
+  create type public.dialer_mode as enum ('manual', 'power', 'parallel');
+exception when duplicate_object then null;
+end $$;
 
-create type public.dialer_session_status as enum ('active', 'paused', 'ended');
+do $$ begin
+  create type public.dialer_session_status as enum ('active', 'paused', 'ended');
+exception when duplicate_object then null;
+end $$;
 
-create type public.task_status as enum ('open', 'done', 'canceled');
+do $$ begin
+  create type public.task_status as enum ('open', 'done', 'canceled');
+exception when duplicate_object then null;
+end $$;
 
-create type public.activity_type as enum (
-  'call',
-  'note',
-  'status_change',
-  'email',
-  'meeting',
-  'import',
-  'ai_analysis'
-);
+do $$ begin
+  create type public.activity_type as enum (
+    'call',
+    'note',
+    'status_change',
+    'email',
+    'meeting',
+    'import',
+    'ai_analysis'
+  );
+exception when duplicate_object then null;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Organisationer og brugere
 -- ---------------------------------------------------------------------------
 
-create table public.organizations (
+create table if not exists public.organizations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   -- Standard afsendernummer i E.164, fx +4571990000
@@ -87,7 +114,7 @@ create table public.organizations (
   updated_at timestamptz not null default now()
 );
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   org_id uuid not null references public.organizations (id) on delete cascade,
   email text not null,
@@ -99,7 +126,7 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create index profiles_org_id_idx on public.profiles (org_id);
+create index if not exists profiles_org_id_idx on public.profiles (org_id);
 
 -- Slår den aktuelle brugers organisation op uden om RLS, så politikker
 -- der selv læser profiles ikke ender i uendelig rekursion.
@@ -127,7 +154,7 @@ $$;
 -- Leads
 -- ---------------------------------------------------------------------------
 
-create table public.lead_lists (
+create table if not exists public.lead_lists (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   name text not null,
@@ -137,9 +164,9 @@ create table public.lead_lists (
   created_at timestamptz not null default now()
 );
 
-create index lead_lists_org_id_idx on public.lead_lists (org_id);
+create index if not exists lead_lists_org_id_idx on public.lead_lists (org_id);
 
-create table public.leads (
+create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   list_id uuid references public.lead_lists (id) on delete set null,
@@ -173,20 +200,20 @@ create table public.leads (
   updated_at timestamptz not null default now()
 );
 
-create index leads_org_id_idx on public.leads (org_id);
-create index leads_org_status_idx on public.leads (org_id, status);
-create index leads_list_id_idx on public.leads (list_id);
-create index leads_next_follow_up_idx on public.leads (org_id, next_follow_up_at)
+create index if not exists leads_org_id_idx on public.leads (org_id);
+create index if not exists leads_org_status_idx on public.leads (org_id, status);
+create index if not exists leads_list_id_idx on public.leads (list_id);
+create index if not exists leads_next_follow_up_idx on public.leads (org_id, next_follow_up_at)
   where next_follow_up_at is not null;
 -- Samme telefonnummer må kun optræde én gang pr. organisation
-create unique index leads_org_phone_uniq on public.leads (org_id, phone)
+create unique index if not exists leads_org_phone_uniq on public.leads (org_id, phone)
   where phone is not null;
 
 -- ---------------------------------------------------------------------------
 -- Dispositioner (udfald af et opkald)
 -- ---------------------------------------------------------------------------
 
-create table public.dispositions (
+create table if not exists public.dispositions (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   code text not null,
@@ -203,13 +230,13 @@ create table public.dispositions (
   unique (org_id, code)
 );
 
-create index dispositions_org_id_idx on public.dispositions (org_id);
+create index if not exists dispositions_org_id_idx on public.dispositions (org_id);
 
 -- ---------------------------------------------------------------------------
 -- Dialer-sessioner og opkald
 -- ---------------------------------------------------------------------------
 
-create table public.dialer_sessions (
+create table if not exists public.dialer_sessions (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   user_id uuid not null references public.profiles (id) on delete cascade,
@@ -226,9 +253,9 @@ create table public.dialer_sessions (
   ended_at timestamptz
 );
 
-create index dialer_sessions_org_user_idx on public.dialer_sessions (org_id, user_id);
+create index if not exists dialer_sessions_org_user_idx on public.dialer_sessions (org_id, user_id);
 
-create table public.calls (
+create table if not exists public.calls (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   lead_id uuid references public.leads (id) on delete set null,
@@ -258,15 +285,15 @@ create table public.calls (
   updated_at timestamptz not null default now()
 );
 
-create index calls_org_id_idx on public.calls (org_id);
-create index calls_lead_id_idx on public.calls (lead_id);
-create index calls_session_id_idx on public.calls (session_id);
-create index calls_org_created_idx on public.calls (org_id, created_at desc);
-create unique index calls_call_control_id_uniq on public.calls (telnyx_call_control_id)
+create index if not exists calls_org_id_idx on public.calls (org_id);
+create index if not exists calls_lead_id_idx on public.calls (lead_id);
+create index if not exists calls_session_id_idx on public.calls (session_id);
+create index if not exists calls_org_created_idx on public.calls (org_id, created_at desc);
+create unique index if not exists calls_call_control_id_uniq on public.calls (telnyx_call_control_id)
   where telnyx_call_control_id is not null;
 
 -- Rå webhook-hændelser, gemt så et opkaldsforløb kan genafspilles ved fejlsøgning
-create table public.call_events (
+create table if not exists public.call_events (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references public.organizations (id) on delete cascade,
   call_id uuid references public.calls (id) on delete cascade,
@@ -276,11 +303,11 @@ create table public.call_events (
   created_at timestamptz not null default now()
 );
 
-create index call_events_call_id_idx on public.call_events (call_id);
-create unique index call_events_telnyx_event_uniq on public.call_events (telnyx_event_id)
+create index if not exists call_events_call_id_idx on public.call_events (call_id);
+create unique index if not exists call_events_telnyx_event_uniq on public.call_events (telnyx_event_id)
   where telnyx_event_id is not null;
 
-create table public.recordings (
+create table if not exists public.recordings (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   call_id uuid not null references public.calls (id) on delete cascade,
@@ -293,9 +320,9 @@ create table public.recordings (
   created_at timestamptz not null default now()
 );
 
-create index recordings_call_id_idx on public.recordings (call_id);
+create index if not exists recordings_call_id_idx on public.recordings (call_id);
 
-create table public.transcripts (
+create table if not exists public.transcripts (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   call_id uuid not null references public.calls (id) on delete cascade,
@@ -308,9 +335,9 @@ create table public.transcripts (
   created_at timestamptz not null default now()
 );
 
-create unique index transcripts_call_id_uniq on public.transcripts (call_id);
+create unique index if not exists transcripts_call_id_uniq on public.transcripts (call_id);
 
-create table public.call_ai_analysis (
+create table if not exists public.call_ai_analysis (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   call_id uuid not null references public.calls (id) on delete cascade,
@@ -335,13 +362,13 @@ create table public.call_ai_analysis (
   created_at timestamptz not null default now()
 );
 
-create unique index call_ai_analysis_call_id_uniq on public.call_ai_analysis (call_id);
+create unique index if not exists call_ai_analysis_call_id_uniq on public.call_ai_analysis (call_id);
 
 -- ---------------------------------------------------------------------------
 -- Aktiviteter, opgaver og møder
 -- ---------------------------------------------------------------------------
 
-create table public.activities (
+create table if not exists public.activities (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   lead_id uuid references public.leads (id) on delete cascade,
@@ -354,10 +381,10 @@ create table public.activities (
   created_at timestamptz not null default now()
 );
 
-create index activities_lead_id_idx on public.activities (lead_id, created_at desc);
-create index activities_org_id_idx on public.activities (org_id, created_at desc);
+create index if not exists activities_lead_id_idx on public.activities (lead_id, created_at desc);
+create index if not exists activities_org_id_idx on public.activities (org_id, created_at desc);
 
-create table public.tasks (
+create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   lead_id uuid references public.leads (id) on delete cascade,
@@ -373,10 +400,10 @@ create table public.tasks (
   completed_at timestamptz
 );
 
-create index tasks_org_due_idx on public.tasks (org_id, status, due_at);
-create index tasks_lead_id_idx on public.tasks (lead_id);
+create index if not exists tasks_org_due_idx on public.tasks (org_id, status, due_at);
+create index if not exists tasks_lead_id_idx on public.tasks (lead_id);
 
-create table public.meetings (
+create table if not exists public.meetings (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations (id) on delete cascade,
   lead_id uuid not null references public.leads (id) on delete cascade,
@@ -391,7 +418,7 @@ create table public.meetings (
   created_at timestamptz not null default now()
 );
 
-create index meetings_org_starts_idx on public.meetings (org_id, starts_at);
+create index if not exists meetings_org_starts_idx on public.meetings (org_id, starts_at);
 
 -- ---------------------------------------------------------------------------
 -- Triggers
@@ -407,13 +434,13 @@ begin
 end;
 $$;
 
-create trigger organizations_set_updated_at before update on public.organizations
+create or replace trigger organizations_set_updated_at before update on public.organizations
   for each row execute function public.set_updated_at();
-create trigger profiles_set_updated_at before update on public.profiles
+create or replace trigger profiles_set_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
-create trigger leads_set_updated_at before update on public.leads
+create or replace trigger leads_set_updated_at before update on public.leads
   for each row execute function public.set_updated_at();
-create trigger calls_set_updated_at before update on public.calls
+create or replace trigger calls_set_updated_at before update on public.calls
   for each row execute function public.set_updated_at();
 
 -- Standarddispositioner som enhver ny organisation starter med.
@@ -440,7 +467,7 @@ begin
 end;
 $$;
 
-create trigger organizations_seed_dispositions after insert on public.organizations
+create or replace trigger organizations_seed_dispositions after insert on public.organizations
   for each row execute function public.seed_default_dispositions();
 
 -- Ny bruger i auth.users får en organisation og en profil.
@@ -482,7 +509,7 @@ begin
 end;
 $$;
 
-create trigger on_auth_user_created after insert on auth.users
+create or replace trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
 -- ---------------------------------------------------------------------------
@@ -505,8 +532,10 @@ alter table public.tasks           enable row level security;
 alter table public.meetings        enable row level security;
 
 -- Organisationen: alle medlemmer kan se den, kun owner/admin kan rette den.
+drop policy if exists organizations_select on public.organizations;
 create policy organizations_select on public.organizations
   for select using (id = public.current_org_id());
+drop policy if exists organizations_update on public.organizations;
 create policy organizations_update on public.organizations
   for update using (
     id = public.current_org_id()
@@ -515,8 +544,10 @@ create policy organizations_update on public.organizations
 
 -- Profiler: alle i organisationen kan ses, men man retter kun sin egen
 -- (owner/admin kan rette alle i organisationen).
+drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles
   for select using (org_id = public.current_org_id());
+drop policy if exists profiles_update on public.profiles;
 create policy profiles_update on public.profiles
   for update using (
     id = auth.uid()
@@ -535,14 +566,27 @@ begin
     'activities', 'tasks', 'meetings'
   ]
   loop
+    -- Politikkerne lægges på igen hver gang, så filen kan køres forfra.
+    execute format(
+      'drop policy if exists %1$s_select on public.%1$s', t
+    );
     execute format(
       'create policy %1$s_select on public.%1$s for select using (org_id = public.current_org_id())', t
+    );
+    execute format(
+      'drop policy if exists %1$s_insert on public.%1$s', t
     );
     execute format(
       'create policy %1$s_insert on public.%1$s for insert with check (org_id = public.current_org_id())', t
     );
     execute format(
+      'drop policy if exists %1$s_update on public.%1$s', t
+    );
+    execute format(
       'create policy %1$s_update on public.%1$s for update using (org_id = public.current_org_id()) with check (org_id = public.current_org_id())', t
+    );
+    execute format(
+      'drop policy if exists %1$s_delete on public.%1$s', t
     );
     execute format(
       'create policy %1$s_delete on public.%1$s for delete using (org_id = public.current_org_id())', t
@@ -561,14 +605,72 @@ $$;
 -- vide hvilket Telnyx-ben agenten sidder på.
 
 alter table public.dialer_sessions
-  add column agent_call_control_id text;
+  add column if not exists agent_call_control_id text;
 
 -- Webhooken slår sessionen op ud fra agentens ben, så det skal være hurtigt.
-create index dialer_sessions_agent_leg_idx
+create index if not exists dialer_sessions_agent_leg_idx
   on public.dialer_sessions (agent_call_control_id)
   where agent_call_control_id is not null;
 
 -- Markerer at et ben er agentens, så webhooken ikke forveksler det med et lead.
 alter table public.calls
-  add column is_agent_leg boolean not null default false;
+  add column if not exists is_agent_leg boolean not null default false;
+
+-- ============================================================
+-- supabase/migrations/20260910140000_backfill_profiles.sql
+-- ============================================================
+-- Giver en allerede oprettet bruger sin organisation og profil.
+--
+-- on_auth_user_created kører "after insert on auth.users", så den fyrer kun
+-- når en bruger oprettes. Har man skrevet sig op før skemaet blev lagt på,
+-- står man tilbage med en række i auth.users og ingen profil - og appen
+-- sender én til opsætningssiden ved hvert login uden at sige hvorfor. Det
+-- ligner at skemaet ikke virkede.
+--
+-- Her får hver bruger uden profil det samme som triggeren ville have givet
+-- dem: en organisation, en profil som owner, og gennem
+-- organizations_seed_dispositions et sæt standarddispositioner.
+--
+-- Kører hver gang skemaet lægges på, og gør intet når alle har en profil.
+
+do $$
+declare
+  waiting record;
+  target_org uuid;
+begin
+  for waiting in
+    select u.id, u.email, u.raw_user_meta_data
+    from auth.users u
+    left join public.profiles p on p.id = u.id
+    where p.id is null
+    order by u.created_at
+  loop
+    -- Er brugeren inviteret til en organisation der findes, bruges den.
+    -- Ellers får de deres egen, præcis som ved en almindelig oprettelse.
+    select o.id into target_org
+    from public.organizations o
+    where o.id = nullif(waiting.raw_user_meta_data ->> 'org_id', '')::uuid;
+
+    if target_org is null then
+      insert into public.organizations (name)
+      values (
+        coalesce(nullif(waiting.raw_user_meta_data ->> 'org_name', ''), 'Min organisation')
+      )
+      returning id into target_org;
+    end if;
+
+    insert into public.profiles (id, org_id, email, full_name, role)
+    values (
+      waiting.id,
+      target_org,
+      waiting.email,
+      nullif(waiting.raw_user_meta_data ->> 'full_name', ''),
+      case
+        when nullif(waiting.raw_user_meta_data ->> 'org_id', '') is null then 'owner'
+        else 'agent'
+      end::public.user_role
+    );
+  end loop;
+end;
+$$;
 

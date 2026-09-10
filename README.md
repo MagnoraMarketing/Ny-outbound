@@ -24,9 +24,19 @@ npm run dev
 ### 1. Supabase
 
 Opret et projekt og læg skemaet på. Nemmest er at indsætte hele
-`supabase/schema.sql` i SQL-editoren i dashboardet og køre den én gang - den
-er alle migrationerne samlet i rigtig rækkefølge. Bruger du CLI'en, så kør
+`supabase/schema.sql` i SQL-editoren i dashboardet og køre den - den er alle
+migrationerne samlet i rigtig rækkefølge. Bruger du CLI'en, så kør
 `supabase db push` mod `supabase/migrations` i stedet.
+
+Filen kan køres igen uden at fejle. Det er med vilje: er en kørsel gået i
+stå undervejs, eller er man i tvivl om hvor langt man nåede, er svaret at
+køre den forfra. En allerede oprettet tabel, type eller politik springes
+over eller lægges på igen, og resultatet er det samme.
+
+Har du oprettet en bruger *før* skemaet blev lagt på, får den sin
+organisation og profil af skemaet - triggeren fyrer kun ved nye
+oprettelser, så uden det ville man blive sendt til opsætningssiden ved
+hvert login uden at få at vide hvorfor.
 
 Skemaet opretter tabellerne, RLS-politikkerne og de triggere der giver en ny
 bruger en organisation, en profil og et sæt standarddispositioner.
